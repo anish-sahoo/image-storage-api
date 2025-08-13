@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Image Storage</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <style>
+        body { font-family: sans-serif; max-width: 600px; margin: 2em auto; }
+        .file-list { margin-top: 2em; }
+        .file-item { margin-bottom: 0.5em; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <h1>Image Storage</h1>
+    <div id="login-area">
+        <form id="login-form" hx-post="/login" hx-target="#login-area" hx-swap="outerHTML">
+            <label>Username: <input name="username" required></label><br>
+            <label>Password: <input name="password" type="password" required></label><br>
+            <button type="submit">Login</button>
+        </form>
+    </div>
+    <div id="upload-area" class="hidden">
+        <form id="upload-form" hx-post="/images" hx-target="#file-list" hx-swap="innerHTML">
+            <input type="file" name="file" required>
+            <button type="submit">Upload</button>
+        </form>
+    </div>
+    <div id="file-list" class="file-list" hx-get="/images" hx-trigger="load">
+    </div>
+    <script>
+        document.body.addEventListener('htmx:afterOnLoad', function(e) {
+            if (e.detail.target.id === 'login-area' && !document.getElementById('login-form')) {
+                document.getElementById('upload-area').classList.remove('hidden');
+            }
+        });
+    </script>
+</body>
+</html>

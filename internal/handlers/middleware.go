@@ -6,7 +6,6 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-// Logger middleware using zerolog
 func Logger(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		log.Info().Str("remote", r.RemoteAddr).Str("method", r.Method).Str("url", r.URL.String()).Msg("request received")
