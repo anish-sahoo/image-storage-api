@@ -23,13 +23,11 @@ func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, err := r.Cookie("jwt")
 		if err != nil {
-			// If it's an htmx request, trigger a client-side redirect instead of injecting HTML
 			if r.Header.Get("HX-Request") == "true" {
 				w.Header().Set("HX-Redirect", "/login.html")
 				w.WriteHeader(http.StatusUnauthorized)
 				return
 			}
-			// For normal requests, serve the login page directly
 			f, ferr := os.Open("web/login.html")
 			if ferr != nil {
 				http.Error(w, "Unauthorized", http.StatusUnauthorized)

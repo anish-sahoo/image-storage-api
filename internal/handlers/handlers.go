@@ -75,8 +75,6 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		MaxAge:   3600,
 	})
 
-	// If login was submitted from the dedicated login page, redirect to index
-	// Otherwise, if submitted from within index, we can return the authenticated fragment.
 	referer := r.Header.Get("Referer")
 	if strings.Contains(referer, "/login.html") || strings.Contains(referer, "/index.html") || referer == "/" || referer == "" {
 		w.Header().Set("HX-Redirect", "/")
@@ -97,10 +95,8 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 func ImagesHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
-		// For htmx, return an HTML fragment of the file list
 		cookie, err := r.Cookie("jwt")
 		if err != nil {
-			// Ask htmx to redirect to login page
 			w.Header().Set("HX-Redirect", "/login.html")
 			w.WriteHeader(http.StatusUnauthorized)
 			return
@@ -111,7 +107,6 @@ func ImagesHandler(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
-		// For now, use sample data instead of DB retrieval
 		sample := []struct {
 			Name string
 		}{
@@ -119,7 +114,6 @@ func ImagesHandler(w http.ResponseWriter, r *http.Request) {
 			{Name: "mountains.png"},
 			{Name: "city.gif"},
 		}
-		// Build simple HTML list
 		var b strings.Builder
 		for _, f := range sample {
 			b.WriteString("<div class='file-item'>")
@@ -146,7 +140,6 @@ func ImagesHandler(w http.ResponseWriter, r *http.Request) {
 		// In a real app, you'd parse the multipart form and save the file.
 		// For now, just return a small success fragment and ask htmx to refresh the list.
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		// Trigger a refresh of the file list via htmx
 		w.Header().Set("HX-Trigger", "refresh-file-list")
 		err = serveHTMLFile(w, "upload-success.html")
 		if err != nil {
@@ -164,16 +157,14 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Clear the JWT cookie
 	http.SetCookie(w, &http.Cookie{
 		Name:     "jwt",
 		Value:    "",
 		Path:     "/",
 		HttpOnly: true,
-		MaxAge:   -1, // Expire immediately
+		MaxAge:   -1,
 	})
 
-	// Redirect to main page using HTMX
 	w.Header().Set("HX-Redirect", "/")
 	w.WriteHeader(http.StatusOK)
 }
@@ -181,19 +172,16 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 func AuthCheckHandler(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie("jwt")
 	if err != nil {
-		// Not authenticated - return login form only
 		serveHTMLFile(w, "login-form.html")
 		return
 	}
 
 	username, err := ValidateJWT(cookie.Value)
 	if err != nil || username == "" {
-		// Invalid token - return login form only
 		serveHTMLFile(w, "login-form.html")
 		return
 	}
 
-	// Authenticated - return upload interface only
 	data := struct {
 		Username string
 	}{
@@ -202,13 +190,11 @@ func AuthCheckHandler(w http.ResponseWriter, r *http.Request) {
 	serveHTMLTemplate(w, "authenticated.html", data)
 }
 
-// JSON API for images (sample data for now)
 func ImagesAPIHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	// Optional: auth check (same as HTML handler)
 	if _, err := r.Cookie("jwt"); err != nil {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
@@ -217,7 +203,7 @@ func ImagesAPIHandler(w http.ResponseWriter, r *http.Request) {
 		{"name": "sunset.jpg"},
 		{"name": "mountains.png"},
 		{"name": "city.gif"},
-	}
+	} // replace with getFiles()
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(sample)
 }
