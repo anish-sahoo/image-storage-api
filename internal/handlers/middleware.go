@@ -1,14 +1,45 @@
 package handlers
 
 import (
+	"io"
 	"net/http"
+	"os"
 
 	"github.com/rs/zerolog/log"
 )
 
-func Logger(next http.Handler) http.Handler {
+func LoggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Info().Str("remote", r.RemoteAddr).Str("method", r.Method).Str("url", r.URL.String()).Msg("request received")
+		log.Info().
+			Str("method", r.Method).
+			Str("url", r.URL.String()).
+			Str("remote", r.RemoteAddr).
+			Msg("Request")
+		next.ServeHTTP(w, r)
+	})
+}
+
+func AuthMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, err := r.Cookie("jwt")
+		if err != nil {
+			// If it's an htmx request, trigger a client-side redirect instead of injecting HTML
+			if r.Header.Get("HX-Request") == "true" {
+				w.Header().Set("HX-Redirect", "/login.html")
+				w.WriteHeader(http.StatusUnauthorized)
+				return
+			}
+			// For normal requests, serve the login page directly
+			f, ferr := os.Open("web/login.html")
+			if ferr != nil {
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				return
+			}
+			defer f.Close()
+			w.Header().Set("Content-Type", "text/html")
+			io.Copy(w, f)
+			return
+		}
 		next.ServeHTTP(w, r)
 	})
 }

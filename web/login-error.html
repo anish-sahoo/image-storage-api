@@ -1,0 +1,8 @@
+<div id="login-area">
+    <p style="color: red;">Invalid credentials. Please try again.</p>
+    <form id="login-form" hx-post="/login" hx-target="#login-area" hx-swap="outerHTML">
+        <label>Username: <input name="username" required></label>
+        <label>Password: <input name="password" type="password" required></label>
+        <button type="submit">Login</button>
+    </form>
+</div>

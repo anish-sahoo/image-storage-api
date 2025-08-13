@@ -1,0 +1,13 @@
+<div id="authenticated-area">
+    <div id="upload-area">
+        <h2>Welcome, {{.Username}}!</h2>
+        <form id="upload-form" hx-post="/images" hx-target="#upload-result" hx-encoding="multipart/form-data" hx-swap="innerHTML">
+            <input type="file" name="file" required>
+            <button type="submit">Upload</button>
+        </form>
+        <div id="upload-result"></div>
+        <button hx-post="/logout">Logout</button>
+    </div>
+    <div id="file-list" class="file-list" hx-get="/images" hx-trigger="load, revealed, refresh-file-list from:body">
+    </div>
+</div>

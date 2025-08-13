@@ -8,7 +8,7 @@ type User struct {
 
 type File struct {
 	ID       int    `db:"id"`
-	name     string `db:"name"`
-	filetype string `db:"filetype"`
-	location string `db:"location"`
+	Name     string `db:"name"`
+	Filetype string `db:"filetype"`
+	Location string `db:"location"`
 }

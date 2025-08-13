@@ -16,7 +16,7 @@ func InitDB(dataSourceName string) error {
 
 func getUserByUsername(username string) (*models.User, error) {
 	var user models.User
-	err := DB.Get(&user, "SELECT id, username, password_hash FROM users WHERE username = :username", map[string]interface{}{"username": username})
+	err := DB.Get(&user, "SELECT id, username, password_hash FROM users WHERE username = ?", username)
 	if err != nil {
 		return nil, err
 	}
@@ -25,4 +25,8 @@ func getUserByUsername(username string) (*models.User, error) {
 
 func insertFile(file models.File) (bool, error) {
 	return true, nil
+}
+
+func getFiles(user models.User, start int, end int) ([]models.File, error) {
+	return nil, nil
 }
