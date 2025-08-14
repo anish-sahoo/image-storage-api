@@ -160,6 +160,8 @@ func handleFileUpload(w http.ResponseWriter, r *http.Request, username string) {
 	}
 
 	file, fileHeader, err := r.FormFile("file")
+	tag := r.FormValue("tag")
+
 	if err != nil {
 		log.Err(err).Msg("Error retrieving file from form data")
 		http.Error(w, "Bad Request", http.StatusBadRequest)
@@ -201,7 +203,7 @@ func handleFileUpload(w http.ResponseWriter, r *http.Request, username string) {
 		Location:      location,
 		OwnerId:       user.ID,
 		FileSizeBytes: int64(fileSize),
-		Tag:           "portfolio_image",
+		Tag:           tag,
 	})
 	if err != nil {
 		log.Err(err).Msg("Error saving file metadata")
@@ -351,4 +353,22 @@ func ImageDownloadAPIHandler(w http.ResponseWriter, r *http.Request) {
 	if _, err := io.Copy(w, f); err != nil {
 		http.Error(w, "Error sending file", http.StatusInternalServerError)
 	}
+}
+
+func FileDeleteHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodDelete {
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	vars := mux.Vars(r)
+	idStr := vars["id"]
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "Invalid file ID", http.StatusBadRequest)
+		return
+	}
+
+	log.Info().Int("id", id).Msg("Deleting")
+	w.Header().Set("HX-Trigger", "refresh-file-list")
+	w.WriteHeader(http.StatusOK)
 }

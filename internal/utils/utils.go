@@ -19,33 +19,34 @@ func CleanFileName(filename string) string {
 }
 
 func RenderFileHTML(f models.File) string {
-	var b strings.Builder
-
-	b.WriteString("<h3>")
-	b.WriteString(template.HTMLEscapeString(f.Name))
-	b.WriteString("</h3>")
-
-	b.WriteString("<p>Type: ")
-	b.WriteString(template.HTMLEscapeString(f.Filetype))
-	b.WriteString("</p>")
-
-	b.WriteString("<p>Size: ")
-	b.WriteString(fmt.Sprintf("%.2f KB", float64(f.FileSizeBytes)/1024))
-	b.WriteString("</p>")
-
-	b.WriteString("<p>Created: ")
-	b.WriteString(f.CreatedAt.Format("Jan 02, 2006 15:04"))
-	b.WriteString("</p>")
-
-	b.WriteString("<p>Tag: ")
-	b.WriteString(template.HTMLEscapeString(f.Tag))
-	b.WriteString("</p>")
-
-	b.WriteString(fmt.Sprintf("<a href='/api/images/%d/download'", f.ID))
-	b.WriteString(fmt.Sprintf("%d", f.ID))
-	b.WriteString("'>Download</a>")
-
-	return b.String()
+	return fmt.Sprintf(`
+<div id="file-%d" class="file-item">
+    <h3>%s</h3>
+    <p>Type: %s</p>
+    <p>Size: %.2f KB</p>
+    <p>Created: %s</p>
+    <p>Tag: %s</p>
+    <a href="/api/images/%d/download">Download</a>
+    <!--
+	<button hx-delete="/images/%d/delete"
+            hx-target="#file-%d"
+            hx-swap="outerHTML"
+            hx-confirm="Are you sure you want to delete '%s'?">
+        Delete
+    </button>
+	-->
+</div>
+`, f.ID,
+		template.HTMLEscapeString(f.Name),
+		template.HTMLEscapeString(f.Filetype),
+		float64(f.FileSizeBytes)/1024,
+		f.CreatedAt.Format("Jan 02, 2006 15:04"),
+		template.HTMLEscapeString(f.Tag),
+		f.ID,
+		f.ID,
+		f.ID,
+		template.HTMLEscapeString(f.Name),
+	)
 }
 
 func FileToPhotoResponse(file models.File) models.PhotoResponse {

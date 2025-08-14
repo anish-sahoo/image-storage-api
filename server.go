@@ -34,6 +34,8 @@ func main() {
 	router.Handle("/login", h.LoggingMiddleware(http.HandlerFunc(h.LoginHandler)))
 	router.Handle("/logout", h.LoggingMiddleware(http.HandlerFunc(h.LogoutHandler)))
 	router.Handle("/auth-check", h.LoggingMiddleware(http.HandlerFunc(h.AuthCheckHandler)))
+	router.Path("/images/{id}/delete").
+		Handler(h.LoggingMiddleware(http.HandlerFunc(h.FileDeleteHandler)))
 	router.Handle("/images", h.LoggingMiddleware(h.AuthMiddleware(http.HandlerFunc(h.ImagesHandler))))
 	router.Handle("/api/images", h.LoggingMiddleware(http.HandlerFunc(h.AllImagesAPIHandler)))
 

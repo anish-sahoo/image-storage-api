@@ -1,8 +1,20 @@
 <div id="authenticated-area">
     <div id="upload-area">
         <h2>Welcome, {{.Username}}!</h2>
-        <form id="upload-form" hx-post="/images" hx-target="#upload-result" hx-encoding="multipart/form-data" hx-swap="innerHTML">
+        <form id="upload-form"
+            hx-post="/images"
+            hx-target="#upload-result"
+            hx-encoding="multipart/form-data"
+            hx-swap="innerHTML">
+
             <input type="file" name="file" required>
+
+            <select name="tag" required>
+                <option value="">Select a tag</option>
+                <option value="image">Image</option>
+                <option value="blog">Blog</option>
+                <option value="personal">Personal</option>
+            </select>
             <button type="submit">Upload</button>
         </form>
         <div id="upload-result"></div>
