@@ -5,6 +5,7 @@ import (
 	"os"
 
 	h "github.com/anish-sahoo/image-storage-api/internal/handlers"
+	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -28,17 +29,22 @@ func main() {
 		return
 	}
 
-	mux := http.NewServeMux()
-	mux.Handle("/", http.FileServer(http.Dir("web")))
-	mux.Handle("/login", h.LoggingMiddleware(http.HandlerFunc(h.LoginHandler)))
-	mux.Handle("/logout", h.LoggingMiddleware(http.HandlerFunc(h.LogoutHandler)))
-	mux.Handle("/auth-check", h.LoggingMiddleware(http.HandlerFunc(h.AuthCheckHandler)))
-	mux.Handle("/images", h.LoggingMiddleware(h.AuthMiddleware(http.HandlerFunc(h.ImagesHandler))))
-	mux.Handle("/api/images", h.LoggingMiddleware(h.AuthMiddleware(http.HandlerFunc(h.ImagesAPIHandler))))
+	router := mux.NewRouter()
+
+	router.Handle("/login", h.LoggingMiddleware(http.HandlerFunc(h.LoginHandler)))
+	router.Handle("/logout", h.LoggingMiddleware(http.HandlerFunc(h.LogoutHandler)))
+	router.Handle("/auth-check", h.LoggingMiddleware(http.HandlerFunc(h.AuthCheckHandler)))
+	router.Handle("/images", h.LoggingMiddleware(h.AuthMiddleware(http.HandlerFunc(h.ImagesHandler))))
+	router.Handle("/api/images", h.LoggingMiddleware(http.HandlerFunc(h.AllImagesAPIHandler)))
+
+	router.Path("/api/images/{id}/download").
+		Handler(h.LoggingMiddleware(http.HandlerFunc(h.ImageDownloadAPIHandler)))
+
+	router.PathPrefix("/").Handler(http.FileServer(http.Dir("web")))
 
 	log.Info().Msg("Server running on http://localhost:8080")
 
-	err := http.ListenAndServe(":8080", mux)
+	err := http.ListenAndServe(":8080", router)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Server failed")
 	}
