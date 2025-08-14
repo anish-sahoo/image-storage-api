@@ -7,8 +7,11 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS files (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
-    filetype TEXT NOT NULL,
+    file_type TEXT NOT NULL,
+    location TEXT NOT NULL,
     owner_id INTEGER NOT NULL,
+    file_size INTEGER NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    tag TEXT NOT NULL,
     FOREIGN KEY (owner_id) REFERENCES users(id)
 );
