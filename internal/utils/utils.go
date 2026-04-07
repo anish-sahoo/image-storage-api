@@ -2,51 +2,51 @@ package utils
 
 import (
 	"fmt"
-	"html/template"
 	"regexp"
 	"strings"
 	"time"
-
-	"path/filepath"
 
 	"github.com/anish-sahoo/image-storage-api/internal/models"
 )
 
 func CleanFileName(filename string) string {
-	filename = strings.ReplaceAll(filename, " ", "")
-	filename = regexp.MustCompile(`[^a-zA-Z0-9.]`).ReplaceAllString(filename, "")
+	filename = strings.ReplaceAll(filename, " ", "_")
+	filename = regexp.MustCompile(`[^a-zA-Z0-9._-]`).ReplaceAllString(filename, "")
 	return filename
 }
 
-func RenderFileHTML(f models.File) string {
-	return fmt.Sprintf(`
-<div id="file-%d" class="file-item">
-    <h3>%s</h3>
-    <p>Type: %s</p>
-    <p>Size: %.2f KB</p>
-    <p>Created: %s</p>
-    <p>Tag: %s</p>
-    <a href="/api/images/%d/download">Download</a>
-    <!--
-	<button hx-delete="/images/%d/delete"
-            hx-target="#file-%d"
-            hx-swap="outerHTML"
-            hx-confirm="Are you sure you want to delete '%s'?">
-        Delete
-    </button>
-	-->
-</div>
-`, f.ID,
-		template.HTMLEscapeString(f.Name),
-		template.HTMLEscapeString(f.Filetype),
-		float64(f.FileSizeBytes)/1024,
-		f.CreatedAt.Format("Jan 02, 2006 15:04"),
-		template.HTMLEscapeString(f.Tag),
-		f.ID,
-		f.ID,
-		f.ID,
-		template.HTMLEscapeString(f.Name),
-	)
+func ExtToContentType(ext string) string {
+	switch strings.ToLower(ext) {
+	case ".jpg", ".jpeg":
+		return "image/jpeg"
+	case ".png":
+		return "image/png"
+	case ".gif":
+		return "image/gif"
+	case ".webp":
+		return "image/webp"
+	case ".pdf":
+		return "application/pdf"
+	case ".mp4":
+		return "video/mp4"
+	case ".mov":
+		return "video/quicktime"
+	default:
+		return "application/octet-stream"
+	}
+}
+
+func FormatFileSize(bytes int64) string {
+	switch {
+	case bytes >= 1<<30:
+		return fmt.Sprintf("%.1f GB", float64(bytes)/(1<<30))
+	case bytes >= 1<<20:
+		return fmt.Sprintf("%.1f MB", float64(bytes)/(1<<20))
+	case bytes >= 1<<10:
+		return fmt.Sprintf("%.1f KB", float64(bytes)/(1<<10))
+	default:
+		return fmt.Sprintf("%d B", bytes)
+	}
 }
 
 func FileToPhotoResponse(file models.File) models.PhotoResponse {
@@ -58,20 +58,4 @@ func FileToPhotoResponse(file models.File) models.PhotoResponse {
 		SizeBytes: file.FileSizeBytes,
 		CreatedAt: file.CreatedAt.Format(time.RFC3339),
 	}
-}
-
-func FileNameToContentType(file models.File) string {
-	var contentType string
-	switch strings.ToLower(filepath.Ext(file.Name)) {
-	case ".pdf":
-		contentType = "application/pdf"
-	case ".png":
-		contentType = "image/png"
-	case ".jpg", ".jpeg":
-		contentType = "image/jpeg"
-	default:
-		contentType = "application/octet-stream"
-	}
-
-	return contentType
 }

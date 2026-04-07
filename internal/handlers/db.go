@@ -58,6 +58,11 @@ func getFile(id int) (models.File, error) {
 	return file, err
 }
 
+func deleteFile(id int) error {
+	_, err := DB.Exec("DELETE FROM files WHERE id = ?", id)
+	return err
+}
+
 func getFilesByUser(username string) ([]models.File, error) {
 	var files []models.File
 	user, err := getUserByUsername(username)

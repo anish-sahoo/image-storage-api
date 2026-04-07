@@ -13,6 +13,7 @@ import (
 
 func main() {
 	godotenv.Load()
+
 	secret := os.Getenv("JWT_SECRET")
 	if secret == "" {
 		log.Fatal().Msg("JWT_SECRET not set in environment")
@@ -29,6 +30,18 @@ func main() {
 		return
 	}
 
+	minioEndpoint := os.Getenv("MINIO_ENDPOINT")
+	minioAccessKey := os.Getenv("MINIO_ACCESS_KEY")
+	minioSecretKey := os.Getenv("MINIO_SECRET_KEY")
+	minioBucket := os.Getenv("MINIO_BUCKET")
+	minioUseSSL := os.Getenv("MINIO_USE_SSL") == "true"
+
+	if err := h.InitS3(minioEndpoint, minioAccessKey, minioSecretKey, minioBucket, minioUseSSL); err != nil {
+		log.Fatal().Err(err).Msg("Failed to initialize S3 client")
+		return
+	}
+	log.Info().Str("bucket", minioBucket).Msg("S3/MinIO connected")
+
 	router := mux.NewRouter()
 
 	router.Handle("/login", h.LoggingMiddleware(http.HandlerFunc(h.LoginHandler)))
@@ -38,9 +51,17 @@ func main() {
 		Handler(h.LoggingMiddleware(http.HandlerFunc(h.FileDeleteHandler)))
 	router.Handle("/images", h.LoggingMiddleware(h.AuthMiddleware(http.HandlerFunc(h.ImagesHandler))))
 	router.Handle("/api/images", h.LoggingMiddleware(http.HandlerFunc(h.AllImagesAPIHandler)))
-
 	router.Path("/api/images/{id}/download").
 		Handler(h.LoggingMiddleware(http.HandlerFunc(h.ImageDownloadAPIHandler)))
+
+	router.Handle("/openapi.yaml", h.LoggingMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/yaml")
+		http.ServeFile(w, r, "openapi.yaml")
+	})))
+	router.Handle("/docs", h.LoggingMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+		http.ServeFile(w, r, "web/docs.html")
+	})))
 
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir("web")))
 

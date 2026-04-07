@@ -2,52 +2,278 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Image Storage</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photo Storage</title>
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <style>
-        body { 
-            font-family: sans-serif; 
-            margin: 2em auto; 
-            max-width: 600px;
-            padding: 0 1em;
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f0f2f5;
+            color: #111827;
+            min-height: 100vh;
         }
-        .file-list { margin-top: 2em; }
-        .file-item { 
-            margin-bottom: 0.5em; 
-            padding: 0.5em;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-        form { margin-bottom: 1em; }
-        label { 
-            display: block; 
-            margin-bottom: 0.5em; 
-        }
-        input, button { 
-            margin: 0.25em 0; 
-            padding: 0.5em;
-        }
-        button {
-            background-color: #007cba;
+
+        /* ── Nav ── */
+        .nav {
+            background: #111827;
             color: white;
+            padding: 0 1.5rem;
+            height: 52px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .nav-brand { font-size: 1rem; font-weight: 600; letter-spacing: -0.01em; }
+        .nav-right { display: flex; align-items: center; gap: 0.75rem; }
+        .nav-user { font-size: 0.8rem; color: #9ca3af; }
+
+        /* ── Dashboard layout ── */
+        .dashboard {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 1.25rem;
+            padding: 1.25rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        @media (max-width: 700px) {
+            .dashboard { grid-template-columns: 1fr; }
+        }
+
+        /* ── Panel ── */
+        .panel {
+            background: white;
+            border-radius: 10px;
+            padding: 1.25rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        .panel-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #6b7280;
+            margin-bottom: 1rem;
+        }
+
+        /* ── Forms ── */
+        .form-group { margin-bottom: 0.875rem; }
+        label { display: block; font-size: 0.8rem; font-weight: 500; color: #374151; margin-bottom: 0.3rem; }
+        select, input[type="file"] {
+            width: 100%;
+            padding: 0.45rem 0.6rem;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            background: white;
+            color: #111827;
+        }
+        input[type="file"] { padding: 0.35rem; cursor: pointer; }
+        select:focus, input:focus { outline: 2px solid #3b82f6; outline-offset: -1px; }
+
+        /* ── Buttons ── */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.4rem 0.875rem;
             border: none;
-            border-radius: 4px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 500;
             cursor: pointer;
+            text-decoration: none;
+            transition: opacity 0.1s;
+            white-space: nowrap;
         }
-        button:hover {
-            background-color: #005a8b;
+        .btn:hover { opacity: 0.85; }
+        .btn-primary { background: #3b82f6; color: white; width: 100%; padding: 0.5rem; }
+        .btn-danger { background: #ef4444; color: white; }
+        .btn-view { background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; }
+        .btn-logout { background: #374151; color: white; font-size: 0.8rem; }
+
+        /* ── Upload result ── */
+        .upload-success {
+            margin-top: 0.75rem;
+            padding: 0.5rem 0.75rem;
+            background: #f0fdf4;
+            color: #15803d;
+            border: 1px solid #86efac;
+            border-radius: 6px;
+            font-size: 0.8rem;
         }
-        #upload-area {
-            border: 1px solid #ddd;
-            padding: 1em;
-            border-radius: 4px;
-            margin-bottom: 1em;
+        .upload-error {
+            margin-top: 0.75rem;
+            padding: 0.5rem 0.75rem;
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+            border-radius: 6px;
+            font-size: 0.8rem;
         }
+
+        /* ── File grid ── */
+        .files-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+        .files-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #6b7280;
+        }
+        .file-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+            gap: 1rem;
+        }
+
+        /* ── File card ── */
+        .file-card {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            transition: box-shadow 0.15s, transform 0.15s;
+        }
+        .file-card:hover {
+            box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+            transform: translateY(-1px);
+        }
+        .file-thumb {
+            width: 100%;
+            aspect-ratio: 4/3;
+            background: #f9fafb;
+            overflow: hidden;
+        }
+        .file-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .file-icon-thumb {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.375rem;
+        }
+        .file-icon-thumb svg { width: 40px; height: 40px; color: #9ca3af; }
+        .file-ext {
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #6b7280;
+            letter-spacing: 0.05em;
+        }
+        .file-body { padding: 0.75rem; }
+        .file-name {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: #111827;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            margin-bottom: 0.4rem;
+        }
+        .file-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+            margin-bottom: 0.6rem;
+        }
+        .file-meta-row { font-size: 0.72rem; color: #6b7280; }
+        .tag-badge {
+            display: inline-block;
+            padding: 0.1rem 0.5rem;
+            border-radius: 9999px;
+            font-size: 0.65rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        .tag-image   { background: #dbeafe; color: #1d4ed8; }
+        .tag-blog    { background: #dcfce7; color: #15803d; }
+        .tag-personal{ background: #fef3c7; color: #b45309; }
+        .tag-        { background: #f3f4f6; color: #374151; }
+        .file-actions { display: flex; gap: 0.4rem; }
+
+        /* ── Empty state ── */
+        .empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 3rem 1rem;
+            color: #9ca3af;
+        }
+        .empty-state svg { width: 48px; height: 48px; margin: 0 auto 0.75rem; display: block; }
+        .empty-state p { font-size: 0.875rem; }
+
+        /* ── Login ── */
+        .login-wrap {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f0f2f5;
+            padding: 1rem;
+        }
+        .login-card {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            width: 100%;
+            max-width: 360px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.1);
+        }
+        .login-card h1 {
+            font-size: 1.375rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+            color: #111827;
+        }
+        .login-card p { font-size: 0.85rem; color: #6b7280; margin-bottom: 1.5rem; }
+        .login-card label { font-size: 0.85rem; font-weight: 500; color: #374151; }
+        .login-card input[type="text"],
+        .login-card input[type="password"] {
+            width: 100%;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            margin-bottom: 0.875rem;
+            margin-top: 0.25rem;
+            background: white;
+            color: #111827;
+        }
+        .login-card input:focus { outline: 2px solid #3b82f6; outline-offset: -1px; border-color: transparent; }
+        .login-card .btn-primary { width: 100%; padding: 0.55rem; font-size: 0.875rem; }
+        .error-msg {
+            padding: 0.5rem 0.75rem;
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            margin-bottom: 1rem;
+        }
+
+        /* HTMX indicators */
+        .htmx-request .btn-primary { opacity: 0.7; pointer-events: none; }
+        .htmx-indicator { display: none; }
+        .htmx-request .htmx-indicator { display: inline; }
     </style>
 </head>
 <body>
-    <h1>Image Storage</h1>
-    <div id="main-content" hx-get="/auth-check" hx-trigger="load">
-    </div>
+    <div id="app" hx-get="/auth-check" hx-trigger="load" hx-swap="innerHTML"></div>
 </body>
 </html>

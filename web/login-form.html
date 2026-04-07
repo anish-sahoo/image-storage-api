@@ -1,7 +1,15 @@
-<div id="login-area">
-    <form id="login-form" hx-post="/login" hx-target="#login-area" hx-swap="outerHTML">
-        <label>Username: <input name="username" required></label>
-        <label>Password: <input name="password" type="password" required></label>
-        <button type="submit">Login</button>
-    </form>
+<div class="login-wrap">
+    <div class="login-card">
+        <h1>Photo Storage</h1>
+        <p>Sign in to manage your files</p>
+        <div id="login-area">
+            <form hx-post="/login" hx-target="#login-area" hx-swap="outerHTML">
+                <label>Username</label>
+                <input type="text" name="username" required autocomplete="username">
+                <label>Password</label>
+                <input type="password" name="password" required autocomplete="current-password">
+                <button type="submit" class="btn btn-primary">Sign In</button>
+            </form>
+        </div>
+    </div>
 </div>

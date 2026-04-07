@@ -1,0 +1,169 @@
+openapi: "3.1.0"
+
+info:
+  title: Photos API
+  description: >
+    Public read-only API for browsing and displaying photos.
+  version: "1.0.0"
+
+servers:
+  - url: /
+
+paths:
+
+  /api/images:
+    get:
+      summary: Paginated list of photos by tag
+      description: >
+        Returns JSON with photo metadata and URLs.
+        Supports cursor-style pagination via `nextPage` / `previousPage` links in the response.
+      parameters:
+        - name: tag
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [image, blog, personal]
+          description: Filter by tag
+        - name: limit
+          in: query
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            example: 20
+          description: Number of results to return
+        - name: offset
+          in: query
+          required: true
+          schema:
+            type: integer
+            minimum: 0
+            example: 0
+          description: Number of results to skip
+      responses:
+        "200":
+          description: Paginated list of photos
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+                example: "*"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListPhotosResponse"
+        "400":
+          description: Missing or invalid query parameters
+
+  /api/images/{id}/download:
+    get:
+      summary: Fetch a photo by ID
+      description: Returns the photo with the appropriate Content-Type for inline display in a browser.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: File ID
+      responses:
+        "200":
+          description: File contents
+          headers:
+            Content-Type:
+              schema:
+                type: string
+                example: image/jpeg
+            Content-Disposition:
+              schema:
+                type: string
+                example: 'inline; filename="photo.jpg"'
+            Content-Length:
+              schema:
+                type: integer
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+            image/png:
+              schema:
+                type: string
+                format: binary
+            image/gif:
+              schema:
+                type: string
+                format: binary
+            image/webp:
+              schema:
+                type: string
+                format: binary
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        "400":
+          description: Invalid file ID
+        "404":
+          description: File not found
+        "500":
+          description: Server error
+
+components:
+  schemas:
+
+    PhotoResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 42
+        name:
+          type: string
+          example: "DSCF05204.jpg"
+        url:
+          type: string
+          example: "/api/images/42/download"
+          description: Relative URL to download/display the file
+        fileType:
+          type: string
+          example: ".jpg"
+        sizeBytes:
+          type: integer
+          format: int64
+          example: 3145728
+        createdAt:
+          type: string
+          format: date-time
+          example: "2026-03-27T14:00:00Z"
+
+    ListPhotosResponse:
+      type: object
+      properties:
+        photos:
+          type: array
+          items:
+            $ref: "#/components/schemas/PhotoResponse"
+        total:
+          type: integer
+          description: Total number of matching files (across all pages)
+          example: 87
+        limit:
+          type: integer
+          example: 20
+        offset:
+          type: integer
+          example: 0
+        nextPage:
+          type: string
+          description: URL for the next page (omitted on the last page)
+          example: "/api/images?tag=image&limit=20&offset=20"
+        previousPage:
+          type: string
+          description: URL for the previous page (omitted on the first page)
+          example: "/api/images?tag=image&limit=20&offset=0"
