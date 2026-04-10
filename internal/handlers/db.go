@@ -28,25 +28,22 @@ func insertFile(file models.File) error {
 	return err
 }
 
-func getImages(tag string, limit int, offset int) ([]models.File, int, error) {
+func getImages(tag string, limit int, cursor int) ([]models.File, error) {
 	var files []models.File
-	var total int
-	err := DB.Get(&total, "SELECT COUNT(*) FROM files WHERE tag = ?", tag)
-	if err != nil {
-		return nil, 0, err
+	var err error
+	if cursor == 0 {
+		err = DB.Select(&files, `
+            SELECT * FROM files WHERE tag = ? ORDER BY id DESC LIMIT ?
+        `, tag, limit)
+	} else {
+		err = DB.Select(&files, `
+            SELECT * FROM files WHERE tag = ? AND id < ? ORDER BY id DESC LIMIT ?
+        `, tag, cursor, limit)
 	}
-	err = DB.Select(&files, `
-        SELECT * 
-        FROM files 
-        WHERE tag = ? 
-        ORDER BY created_at DESC 
-        LIMIT ? OFFSET ?
-    `, tag, limit, offset)
-
 	if err != nil {
-		return nil, 0, err
+		return nil, err
 	}
-	return files, total, nil
+	return files, nil
 }
 
 func getFile(id int) (models.File, error) {
